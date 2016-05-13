@@ -1,11 +1,12 @@
 (ns open-hours.core
   (:require [clj-time.core :as t]
-            [clj-time.format :as f])
+            [clj-time.format :as f]
+            [clj-time.predicates :as pr])
   (:gen-class
     :name openhours.core.OpeningHours
     :init init
     :state state
-    :constructors {[String] []}
+    :constructors {[Array String String] []}
     :methods [[isOpenOn [String] Boolean]]))
 
 (defn format-time
@@ -19,10 +20,24 @@
     (f/parse basic-formatter timestamp)))
 
 (defn -init
-  [config]
-  [[] config])
+  [shop-config]
+  [[] shop-config])
 
 (defn -isOpenOn
-  [this datetime]
-  (= datetime "2016-05-11T12:22:11.824Z"))
+  "parse the passed in date:
+    check: if it's on one of the days in the config 
+           and it's in the time range"
+  [this datetime-string]
+  (let [state     (.state this)
+        datetime  (parse-time datetime-string)
+        days      (:days state)
+        hours     (:hours state)
+        right-day (or (and (contains? :monday (days)) (pr/monday? datetime))
+                      (and (contains? :tuesday (days)) (pr/tuesday? datetime))
+                      (and (contains? :wednesday (days)) (pr/wednesday? datetime))
+                      (and (contains? :thursday (days)) (pr/thursday? datetime))
+                      (and (contains? :friday (days)) (pr/monday? datetime))
+                      (and (contains? :saturday (days)) (pr/monday? datetime))
+                      (and (contains? :sunday (days)) (pr/monday? datetime)))]
+    (= (parse-time datetime) )))
 
